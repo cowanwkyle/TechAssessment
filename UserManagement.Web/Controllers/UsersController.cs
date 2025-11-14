@@ -1,7 +1,8 @@
-﻿using System.Linq;
+﻿using System;
 using System.Threading.Tasks;
 using UserManagement.Models;
 using UserManagement.Services.Domain.Interfaces;
+using UserManagement.Web.Extensions;
 using UserManagement.Web.Models.Users;
 
 namespace UserManagement.WebMS.Controllers;
@@ -15,70 +16,98 @@ public class UsersController : Controller
     [HttpGet]
     public async Task<IActionResult> List(bool? isActive)
     {
-        IEnumerable<User> users;
-        if (!isActive.HasValue)
-        {
-            users = await _userService.GetAllAsync();
-        }
-        else
-        {
-            users = await _userService.FilterByActiveAsync(isActive.Value);
-        }
+        List<User> users = !isActive.HasValue
+            ? await _userService.GetAllAsync()
+            : await _userService.FilterByActiveAsync(isActive.Value);
+        
 
-        var items = users.Select(p => new UserListItemViewModel
-        {
-            Id = p.Id,
-            Forename = p.Forename,
-            Surname = p.Surname,
-            Email = p.Email,
-            IsActive = p.IsActive,
-            DateOfBirth = p.DateOfBirth
-        });
+        var items = users.ToUserItems();
 
         var model = new UserListViewModel
         {
-            Items = items.ToList()
+            Items = items,
+            IsActive = isActive
         };
-
         return View(model);
     }
-    //[HttpGet]
-    //public async Task<IActionResult> List()
-    //{
-    //    var users = await _userService.GetAllAsync();
-    //    var items = users.Select(p => new UserListItemViewModel
-    //    {
-    //        Id = p.Id,
-    //        Forename = p.Forename,
-    //        Surname = p.Surname,
-    //        Email = p.Email,
-    //        IsActive = p.IsActive
-    //    });
 
-    //    var model = new UserListViewModel
-    //    {
-    //        Items = items.ToList()
-    //    };
+    [HttpGet("create")]
+    public IActionResult Create() =>
+        View(new UserListItemViewModel { IsActive = true, DateOfBirth = DateTime.Now });
 
-    //    return View(model);
-    //}
-    //[HttpGet("/[action]/{isActive?}")]
-    //public IActionResult ActiveFilteredList(bool isActive = false)
-    //{
-    //    var items = _userService.FilterByActive(isActive).Select(p => new UserListItemViewModel
-    //    {
-    //        Id = p.Id,
-    //        Forename = p.Forename,
-    //        Surname = p.Surname,
-    //        Email = p.Email,
-    //        IsActive = p.IsActive
-    //    });
+    [HttpPost("create")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(UserListItemViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
 
-    //    var model = new UserListViewModel
-    //    {
-    //        Items = items.ToList()
-    //    };
+        var user = model.ToUser();
 
-    //    return View("List",model);
-    //}
+        await _userService.CreateAsync(user);
+        return RedirectToAction(nameof(List),model.IsActive);
+    }
+
+    [HttpGet("details")]
+    public async Task<IActionResult> Details(long id)
+    {
+        var user = await _userService.GetByIdAsync(id);
+        if (user == null)
+            return NotFound();
+
+        var userItem = new UserListItemViewModel
+        {
+            Id = user.Id,
+            Forename = user.Forename,
+            Surname = user.Surname,
+            Email = user.Email,
+            IsActive = user.IsActive,
+            DateOfBirth = user.DateOfBirth
+        };
+
+        return View(userItem);
+    }
+
+    [HttpGet("edit")]
+    public async Task<IActionResult> Edit(long id, string? returnUrl = null)
+    {
+        var user = await _userService.GetByIdAsync(id);
+        if (user == null)
+            return NotFound();
+
+        var userItem = user.ToUserItem();
+        ViewData["ReturnUrl"] = returnUrl;
+        return View(userItem);
+    }
+
+    [HttpPost("edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(long id, UserListItemViewModel model, string? returnUrl = null)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            return View(model);
+        }
+
+        var user = await _userService.GetByIdAsync(id);
+        if (user == null)
+            return NotFound();
+
+        user.UpdateFrom(model);
+        await _userService.UpdateAsync(user);
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return Redirect(returnUrl);
+
+        return RedirectToAction(nameof(List));
+    }
+
+    [HttpPost("delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(long id)
+    {
+        await _userService.DeleteAsync(id);
+        return RedirectToAction("List");
+    }
 }

@@ -1,0 +1,30 @@
+﻿<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center">
+
+            <div class="modal-header justify-content-center">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close position-absolute end-0 me-3"
+                        data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                Are you sure you want to delete <strong id="deleteUserName"></strong>?
+            </div>
+
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-left"></i> Cancel
+                    </button>
+
+                <form method="post" id="deleteForm">
+                    <input type="hidden" name="id" id="deleteUserId" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash-fill"></i> Delete
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>

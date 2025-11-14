@@ -1,0 +1,36 @@
+﻿@model UserManagement.Web.Models.Users.UserListItemViewModel
+
+@{
+    ViewData["Title"] = "Edit User";
+    var returnUrl = (string?)ViewData["ReturnUrl"];
+}
+
+<div class="container py-4">
+    <h2>@ViewData["Title"]</h2>
+
+    <form asp-action="Edit" method="post" class="needs-validation" novalidate>
+        <input asp-for="Id" type="hidden" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+        <partial name="_UserInput" model="Model" />
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary me-2">
+                <i class="bi bi-floppy-fill"></i> Save Changes
+            </button>
+
+            @if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                <a href="@returnUrl" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Cancel
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Users" asp-action="List" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Cancel
+                </a>                
+            }
+        </div>
+    </form>
+</div>

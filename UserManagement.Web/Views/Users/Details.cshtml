@@ -1,0 +1,35 @@
+﻿@model UserManagement.Web.Models.Users.UserListItemViewModel
+
+@{
+    ViewData["Title"] = "User Details";
+    var currentUrl = Url.Action("Details", "Users", new { id = Model.Id });
+}
+
+<div class="container py-4">
+    <h2>@ViewData["Title"]</h2>
+
+    <dl class="row">
+        <dt class="col-sm-3">Forename</dt>
+        <dd class="col-sm-9">@Model.Forename</dd>
+
+        <dt class="col-sm-3">Surname</dt>
+        <dd class="col-sm-9">@Model.Surname</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
+
+        <dt class="col-sm-3">Active</dt>
+        <dd class="col-sm-9">@(Model.IsActive ? "Yes" : "No")</dd>
+
+        <dt class="col-sm-3">Date of Birth</dt>
+        <dd class="col-sm-9">@Model.DateOfBirth?.ToString("yyyy-MM-dd")</dd>
+    </dl>
+    <div class="mt-3">
+        <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@currentUrl" class="btn btn-primary">
+            <i class="bi bi-pencil-fill"></i> Edit
+        </a>
+        <a asp-controller="Users" asp-action="List" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>    
+</div>

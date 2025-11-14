@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using UserManagement.Data;
 using UserManagement.Models;
 using UserManagement.Services.Domain.Interfaces;
@@ -17,20 +16,29 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="isActive"></param>
     /// <returns></returns>
-    public async Task<IEnumerable<User>> FilterByActiveAsync(bool isActive)
-        => await _dataAccess.Get<User>(user => user.IsActive == isActive).ToListAsync();
+    public async Task<List<User>> FilterByActiveAsync(bool isActive)
+        => await _dataAccess.GetAsync<User>(user => user.IsActive == isActive);
 
-    public IEnumerable<User> FilterByActive(bool isActive)
+    public async Task<List<User>> GetAllAsync()
+        => await _dataAccess.GetAllAsync<User>();
+
+    public async Task CreateAsync(User user)
     {
-        var users =_dataAccess.Get<User>(user => user.IsActive == isActive);
-        return users;
+        await _dataAccess.CreateAsync(user);
     }
 
-    public IEnumerable<User> GetAll() => _dataAccess.GetAll<User>();
+    public async Task<User?> GetByIdAsync(long id)
+    {
+        return await _dataAccess.GetByIDAsync<User>(id);
+    }
 
-    /// <summary>
-    /// Asynchronous API to return all users
-    /// </summary>
-    public async Task<IEnumerable<User>> GetAllAsync()
-        => await _dataAccess.GetAll<User>().ToListAsync();
+    public async Task UpdateAsync(User user)
+    {
+        await _dataAccess.UpdateAsync(user);
+    }
+
+    public async Task DeleteAsync(long id)
+    {        
+        await _dataAccess.DeleteAsync<User>(id);
+    }
 }
