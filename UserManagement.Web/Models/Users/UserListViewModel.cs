@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using UserManagement.Data.Extensions;
 using UserManagement.Web.Extensions;
@@ -7,8 +8,12 @@ namespace UserManagement.Web.Models.Users;
 
 public class UserListViewModel
 {
-    public List<UserListItemViewModel> Items { get; set; } = new();
     public bool? IsActive { get; set; }
+    public UserListSortField SortField { get; set; } = UserListSortField.Id;
+    public bool SortOrder { get; set; } = false;
+
+    public PagedList<UserListItemViewModel> PagedItems { get; set; } = new();
+
 }
 
 public class UserListItemViewModel
@@ -28,10 +33,22 @@ public class UserListItemViewModel
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Invalid email address.")]
     public string? Email { get; set; }
+    [DisplayName("Account Active")]
     public bool IsActive { get; set; }
 
     [Required(ErrorMessage = "Date of birth is required.")]
-    [DataType(DataType.Date)]
+    [DataType(DataType.Date), DisplayName("Date of Birth")]
     [CustomValidation(typeof(UserValidators), nameof(UserValidators.ValidateDateOfBirth))]
     public DateTime? DateOfBirth { get; set; }
 }
+
+public enum UserListSortField
+{
+    Id,
+    Forename,
+    Surname,
+    Email,
+    DateOfBirth,
+    IsActive
+}
+

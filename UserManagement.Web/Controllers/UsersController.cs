@@ -12,22 +12,24 @@ public class UsersController : Controller
 {
     private readonly IUserService _userService;
     public UsersController(IUserService userService) => _userService = userService;
+    private const int PageSize = 10;
 
     [HttpGet]
-    public async Task<IActionResult> List(bool? isActive)
+    public async Task<IActionResult> List(bool? isActive, UserListSortField? sortField, int? pageNumber, bool sortOrder = false)
     {
-        List<User> users = !isActive.HasValue
-            ? await _userService.GetAllAsync()
-            : await _userService.FilterByActiveAsync(isActive.Value);
-        
-
-        var items = users.ToUserItems();
-
         var model = new UserListViewModel
         {
-            Items = items,
-            IsActive = isActive
+            IsActive = isActive,
+            SortOrder = sortOrder,
+            SortField = sortField ?? UserListSortField.Id
         };
+
+        string sortfieldName = model.SortField.ToString()?? UserListSortField.Id.ToString();
+        List<User> users = !isActive.HasValue
+            ? await _userService.GetAllAsync(sortfieldName, sortOrder)
+            : await _userService.FilterByActiveAsync(isActive.Value, sortfieldName, sortOrder);
+        
+        model.PagedItems = await PagedList<UserListItemViewModel>.CreateAsync(users.ToUserItems(), pageNumber ?? 1, PageSize);
         return View(model);
     }
 

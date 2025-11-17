@@ -23,10 +23,10 @@ public class UserServiceTests
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
         var users = DefaultUsers();
-        _mockDataContext.Setup(s => s.GetAllAsync<User>()).ReturnsAsync(users);
+        _mockDataContext.Setup(s => s.GetAsync<User>(null,"Id", false)).ReturnsAsync(users);
 
         // Act: Invokes the method under test with the arranged parameters.
-        var result = await _service.GetAllAsync();
+        var result = await _service.GetAllAsync("Id", false);
 
         // Assert: Verifies that the action of the method under test behaves as expected.
         result.Should().BeEquivalentTo(users);
@@ -38,14 +38,14 @@ public class UserServiceTests
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
         var users = new List<User>() { CreateUser(1, true) };
-        _mockDataContext.Setup(s => s.GetAsync<User>(It.IsAny<Expression<Func<User, bool>>>())).ReturnsAsync(users).Verifiable();
+        _mockDataContext.Setup(s => s.GetAsync<User>(It.IsAny<Expression<Func<User, bool>>>(), "Id", false)).ReturnsAsync(users).Verifiable();
 
         // Act: Invokes the method under test with the arranged parameters.
-        var result = await _service.FilterByActiveAsync(true);
+        var result = await _service.FilterByActiveAsync(true,"Id", false);
 
         // Assert: Verifies that the action of the method under test behaves as expected.
         result.Should().BeEquivalentTo(users);
-        _mockDataContext.Verify(data => data.GetAsync<User>(It.IsAny<Expression<Func<User, bool>>>()), Times.Once);
+        _mockDataContext.Verify(data => data.GetAsync<User>(It.IsAny<Expression<Func<User, bool>>>(), "Id", false), Times.Once);
     }
 
     [Fact]

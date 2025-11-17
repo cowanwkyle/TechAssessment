@@ -26,15 +26,15 @@ public class UserControllerTests
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
         var users = DefaultUsers();
-        _mockUserService.Setup(s => s.GetAllAsync()).ReturnsAsync(users);
+        _mockUserService.Setup(s => s.GetAllAsync("Id", false)).ReturnsAsync(users);
 
         // Act: Invokes the method under test with the arranged parameters.
-        var result = await _controller.List(null);
+        var result = await _controller.List(null,UserListSortField.Id, 1, false);
 
         // Assert: Verifies that the action of the method under test behaves as expected.
         result.Should().BeOfType<ViewResult>()
           .Which.Model.Should().BeOfType<UserListViewModel>()
-          .Which.Items.Should().BeEquivalentTo(users);
+          .Which.PagedItems.Should().BeEquivalentTo(users);
     }
 
     [Fact]
@@ -42,15 +42,15 @@ public class UserControllerTests
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
         var users = new List<User>() { CreateUser(1, true) };
-        _mockUserService.Setup(s => s.FilterByActiveAsync(true)).ReturnsAsync(users).Verifiable();
+        _mockUserService.Setup(s => s.FilterByActiveAsync(true, "Id", false)).ReturnsAsync(users).Verifiable();
 
         // Act: Invokes the method under test with the arranged parameters.
-        var result = await _controller.List(true);
+        var result = await _controller.List(true, UserListSortField.Id, 1, false);
 
         // Assert: Verifies that the action of the method under test behaves as expected.
         result.Should().BeOfType<ViewResult>()
           .Which.Model.Should().BeOfType<UserListViewModel>()
-          .Which.Items.Should().BeEquivalentTo(users);
+          .Which.PagedItems.Should().BeEquivalentTo(users);
         _mockUserService.Verify();
     }
 

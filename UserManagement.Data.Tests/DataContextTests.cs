@@ -70,7 +70,7 @@ public class DataContextTests
         var context = CreateContext();
 
         // Act: Invokes the method under test with the arranged parameters.
-        var result = await context.GetAsync<User>(user => user.IsActive);
+        var result = await context.GetAsync<User>(user => user.IsActive, "Id", false);
 
         // Assert: Verifies that the action of the method under test behaves as expected.
         result.Should().OnlyContain(user => user.IsActive);

@@ -6,15 +6,10 @@ namespace UserManagement.Services.Domain.Interfaces;
 
 public interface IUserService
 {
-    /// <summary>
-    /// Return users by active state
-    /// </summary>
-    /// <param name="isActive"></param>
-    /// <returns></returns>
-    Task<List<User>> FilterByActiveAsync(bool isActive);
-    Task<List<User>> GetAllAsync();
+    Task<List<User>> GetAllAsync(string sortField, bool isDesc);
     Task CreateAsync(User user);
     Task<User?> GetByIdAsync(long id);
     Task UpdateAsync(User user);
     Task DeleteAsync(long id);
+    Task<List<User>> FilterByActiveAsync(bool isActive, string sortField, bool isDesc);
 }

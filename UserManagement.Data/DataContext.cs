@@ -33,65 +33,45 @@ public class DataContext : DbContext, IDataContext
 
     public DbSet<User>? Users { get; set; }
 
-    //public IQueryable<TEntity> GetAll<TEntity>() where TEntity : class
-    //    => base.Set<TEntity>();
-
-    //public IQueryable<TEntity> Get<TEntity>(Expression<Func<TEntity, bool>>? filter = null) where TEntity : class
-    //{
-    //    IQueryable<TEntity> query = base.Set<TEntity>();
-    //    if (filter != null)
-    //    {
-    //        query = query.Where(filter).AsQueryable();
-    //    }
-    //    return query;
-    //}
-
-    //public TEntity? GetByID<TEntity>(object id) where TEntity : class => base.Find<TEntity>(id);
-
-    //public void Create<TEntity>(TEntity entity) where TEntity : class
-    //{
-    //    base.Add(entity);
-    //    SaveChanges();
-    //}
-
-    //public new void Update<TEntity>(TEntity entity) where TEntity : class
-    //{
-    //    base.Update(entity);
-    //    SaveChanges();
-    //}
-
-    //public void Delete<TEntity>(TEntity entity) where TEntity : class
-    //{
-    //    base.Remove(entity);
-    //    SaveChanges();
-    //}
-
     public Task<List<TEntity>> GetAllAsync<TEntity>() where TEntity : class => Set<TEntity>().ToListAsync();
-    public Task<List<TEntity>> GetAsync<TEntity>(Expression<Func<TEntity, bool>>? filter = null) where TEntity : class
+    
+    public Task<List<TEntity>> GetAsync<TEntity>(Expression<Func<TEntity, bool>>? filter = null, string sortField = "", bool isDesc = false) where TEntity : class
     {
         IQueryable<TEntity> query = base.Set<TEntity>();
         if (filter != null)
         {
             query = query.Where(filter);
         }
+        if(isDesc)
+        {
+            query = query.OrderByDescending(e => EF.Property<object>(e, sortField));
+        }
+        else
+        {
+            query = query.OrderBy(e => EF.Property<object>(e, sortField));
+        }
         return query.ToListAsync();
     }
+
     public async Task<TEntity> GetByIDAsync<TEntity>(object id) where TEntity : class
     {
         var entity = await base.FindAsync<TEntity>(id) ?? throw new ArgumentException($"{typeof(TEntity).Name} with id {id} not found.");
         
         return entity;
     }
+
     public async Task CreateAsync<TEntity>(TEntity entity) where TEntity : class
     {
         await base.AddAsync(entity);
         await SaveChangesAsync();
     }
+
     public async Task UpdateAsync<TEntity>(TEntity entity) where TEntity : class
     {
         base.Update(entity);
         await SaveChangesAsync();
     }
+
     public async Task DeleteAsync<TEntity>(object id) where TEntity : class
     {
         var entity = await GetByIDAsync<TEntity>(id);

@@ -16,11 +16,11 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="isActive"></param>
     /// <returns></returns>
-    public async Task<List<User>> FilterByActiveAsync(bool isActive)
-        => await _dataAccess.GetAsync<User>(user => user.IsActive == isActive);
+    public async Task<List<User>> FilterByActiveAsync(bool isActive, string sortField, bool isDesc)
+        => await _dataAccess.GetAsync<User>(user => user.IsActive == isActive, sortField, isDesc);
 
-    public async Task<List<User>> GetAllAsync()
-        => await _dataAccess.GetAllAsync<User>();
+    public async Task<List<User>> GetAllAsync(string sortField, bool isDesc)
+        => await _dataAccess.GetAsync<User>(null, sortField, isDesc);
 
     public async Task CreateAsync(User user)
     {
