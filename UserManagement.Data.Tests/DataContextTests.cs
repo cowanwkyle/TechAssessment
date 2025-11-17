@@ -8,6 +8,37 @@ namespace UserManagement.Data.Tests;
 public class DataContextTests
 {
     [Fact]
+    public async Task GetAllAsync_ReturnsSeededUsers()
+    {
+        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
+        var context = CreateContext();
+
+        // Act: Invokes the method under test with the arranged parameters.
+        var result = await context.GetAllAsync<User>();
+
+        // Assert: Verifies that the action of the method under test behaves as expected.
+        result.Should().NotBeNullOrEmpty();
+        result.Count.Should().Be(11);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WhenDeleted_MustNotIncludeDeletedEntity()
+    {
+        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
+        var context = CreateContext();
+        var users = await context.GetAllAsync<User>();
+        var entity = users.First();
+        await context.DeleteAsync<User>(entity.Id);
+
+        // Act: Invokes the method under test with the arranged parameters.
+        var result = await context.GetAllAsync<User>();
+
+        // Assert: Verifies that the action of the method under test behaves as expected.
+        result.Should().NotContain(s => s.Email == entity.Email);
+        result.Count.Should().Be(users.Count - 1);
+    }
+
+    [Fact]
     public async Task GetAllAsync_WhenNewEntityAdded_MustIncludeNewEntity()
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
@@ -33,37 +64,6 @@ public class DataContextTests
     }
 
     [Fact]
-    public async Task GetAllAsync_WhenDeleted_MustNotIncludeDeletedEntity()
-    {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var context = CreateContext();
-        var users = await context.GetAllAsync<User>();
-        var entity = users.First();
-        await context.DeleteAsync<User>(entity.Id);
-
-        // Act: Invokes the method under test with the arranged parameters.
-        var result = await context.GetAllAsync<User>();
-
-        // Assert: Verifies that the action of the method under test behaves as expected.
-        result.Should().NotContain(s => s.Email == entity.Email);
-        result.Count.Should().Be(users.Count - 1);
-    }
-
-    [Fact]
-    public async Task GetAllAsync_ReturnsSeededUsers()
-    {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var context = CreateContext();
-
-        // Act: Invokes the method under test with the arranged parameters.
-        var result = await context.GetAllAsync<User>();
-
-        // Assert: Verifies that the action of the method under test behaves as expected.
-        result.Should().NotBeNullOrEmpty();
-        result.Count.Should().Be(11);
-    }
-
-    [Fact]
     public async Task GetAsync_WithFilter_ReturnsOnlyMatching()
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
@@ -75,6 +75,21 @@ public class DataContextTests
         // Assert: Verifies that the action of the method under test behaves as expected.
         result.Should().OnlyContain(user => user.IsActive);
         result.Count.Should().BePositive();
+    }
+
+    [Fact]
+    public async Task GetByIDAsync_WithInvalidId_ThrowsNotFound()
+    {
+        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
+        var context = CreateContext();
+        const long invalidTestUserId = 999;
+
+        // Act: Invokes the method under test with the arranged parameters.
+        var result = async () => await context.GetByIDAsync<User>(invalidTestUserId);
+
+        // Assert: Verifies that the action of the method under test behaves as expected.
+        await result.Should().ThrowAsync<ArgumentException>()
+            .WithMessage($"User with id {invalidTestUserId} not found.");
     }
 
     [Fact]
@@ -91,21 +106,6 @@ public class DataContextTests
         result.Should().NotBeNull();
         result.Id.Should().Be(testUserId);
         result.Forename.Should().Be("Peter");
-    }
-
-    [Fact]
-    public async Task GetByIDAsync_WithInvalidId_ThrowsNotFound()
-    {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var context = CreateContext();
-        const long invalidTestUserId = 999;
-
-        // Act: Invokes the method under test with the arranged parameters.
-        var result = async () =>  await context.GetByIDAsync<User>(invalidTestUserId); 
-
-        // Assert: Verifies that the action of the method under test behaves as expected.
-        await result.Should().ThrowAsync<ArgumentException>()
-            .WithMessage($"User with id {invalidTestUserId} not found.");
     }
 
     [Fact]

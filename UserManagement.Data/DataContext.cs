@@ -12,8 +12,56 @@ public class DataContext : DbContext, IDataContext
 {
     public DataContext() => Database.EnsureCreated();
 
+    public DbSet<User>? Users { get; set; }
+
+    public async Task CreateAsync<TEntity>(TEntity entity) where TEntity : class
+    {
+        await base.AddAsync(entity);
+        await SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync<TEntity>(object id) where TEntity : class
+    {
+        var entity = await GetByIDAsync<TEntity>(id);
+        base.Remove(entity);
+        await SaveChangesAsync();
+    }
+
+    public Task<List<TEntity>> GetAllAsync<TEntity>() where TEntity : class => Set<TEntity>().ToListAsync();
+
+    public Task<List<TEntity>> GetAsync<TEntity>(Expression<Func<TEntity, bool>>? filter = null, string sortField = "", bool isDesc = false) where TEntity : class
+    {
+        IQueryable<TEntity> query = base.Set<TEntity>();
+        if (filter != null)
+        {
+            query = query.Where(filter);
+        }
+        if (isDesc)
+        {
+            query = query.OrderByDescending(e => EF.Property<object>(e, sortField));
+        }
+        else
+        {
+            query = query.OrderBy(e => EF.Property<object>(e, sortField));
+        }
+        return query.ToListAsync();
+    }
+
+    public async Task<TEntity> GetByIDAsync<TEntity>(object id) where TEntity : class
+    {
+        var entity = await base.FindAsync<TEntity>(id) ?? throw new ArgumentException($"{typeof(TEntity).Name} with id {id} not found.");
+
+        return entity;
+    }
+
+    public async Task UpdateAsync<TEntity>(TEntity entity) where TEntity : class
+    {
+        base.Update(entity);
+        await SaveChangesAsync();
+    }
+
     protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseInMemoryDatabase("UserManagement.Data.DataContext");
+                                    => options.UseInMemoryDatabase("UserManagement.Data.DataContext");
 
     protected override void OnModelCreating(ModelBuilder model)
         => model.Entity<User>().HasData(new[]
@@ -30,52 +78,4 @@ public class DataContext : DbContext, IDataContext
             new User { Id = 10, Forename = "Johnny", Surname = "Blaze", Email = "jblaze@example.com", IsActive = true, DateOfBirth = DateTime.Parse("2025-4-19") },
             new User { Id = 11, Forename = "Robin", Surname = "Feld", Email = "rfeld@example.com", IsActive = true, DateOfBirth = DateTime.Parse("2025-8-30") },
         });
-
-    public DbSet<User>? Users { get; set; }
-
-    public Task<List<TEntity>> GetAllAsync<TEntity>() where TEntity : class => Set<TEntity>().ToListAsync();
-    
-    public Task<List<TEntity>> GetAsync<TEntity>(Expression<Func<TEntity, bool>>? filter = null, string sortField = "", bool isDesc = false) where TEntity : class
-    {
-        IQueryable<TEntity> query = base.Set<TEntity>();
-        if (filter != null)
-        {
-            query = query.Where(filter);
-        }
-        if(isDesc)
-        {
-            query = query.OrderByDescending(e => EF.Property<object>(e, sortField));
-        }
-        else
-        {
-            query = query.OrderBy(e => EF.Property<object>(e, sortField));
-        }
-        return query.ToListAsync();
-    }
-
-    public async Task<TEntity> GetByIDAsync<TEntity>(object id) where TEntity : class
-    {
-        var entity = await base.FindAsync<TEntity>(id) ?? throw new ArgumentException($"{typeof(TEntity).Name} with id {id} not found.");
-        
-        return entity;
-    }
-
-    public async Task CreateAsync<TEntity>(TEntity entity) where TEntity : class
-    {
-        await base.AddAsync(entity);
-        await SaveChangesAsync();
-    }
-
-    public async Task UpdateAsync<TEntity>(TEntity entity) where TEntity : class
-    {
-        base.Update(entity);
-        await SaveChangesAsync();
-    }
-
-    public async Task DeleteAsync<TEntity>(object id) where TEntity : class
-    {
-        var entity = await GetByIDAsync<TEntity>(id);
-        base.Remove(entity);
-        await SaveChangesAsync();
-    }
 }

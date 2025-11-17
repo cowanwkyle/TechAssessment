@@ -10,28 +10,11 @@ namespace UserManagement.WebMS.Controllers;
 [Route("users")]
 public class UsersController : Controller
 {
-    private readonly IUserService _userService;
-    public UsersController(IUserService userService) => _userService = userService;
     private const int PageSize = 10;
 
-    [HttpGet]
-    public async Task<IActionResult> List(bool? isActive, UserListSortField? sortField, int? pageNumber, bool sortOrder = false)
-    {
-        var model = new UserListViewModel
-        {
-            IsActive = isActive,
-            SortOrder = sortOrder,
-            SortField = sortField ?? UserListSortField.Id
-        };
+    private readonly IUserService _userService;
 
-        string sortfieldName = model.SortField.ToString()?? UserListSortField.Id.ToString();
-        List<User> users = !isActive.HasValue
-            ? await _userService.GetAllAsync(sortfieldName, sortOrder)
-            : await _userService.FilterByActiveAsync(isActive.Value, sortfieldName, sortOrder);
-        
-        model.PagedItems = await PagedList<UserListItemViewModel>.CreateAsync(users.ToUserItems(), pageNumber ?? 1, PageSize);
-        return View(model);
-    }
+    public UsersController(IUserService userService) => _userService = userService;
 
     [HttpGet("create")]
     public IActionResult Create() =>
@@ -47,7 +30,15 @@ public class UsersController : Controller
         var user = model.ToUser();
 
         await _userService.CreateAsync(user);
-        return RedirectToAction(nameof(List),model.IsActive);
+        return RedirectToAction(nameof(List), model.IsActive);
+    }
+
+    [HttpPost("delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(long id)
+    {
+        await _userService.DeleteAsync(id);
+        return RedirectToAction("List");
     }
 
     [HttpGet("details")]
@@ -105,11 +96,22 @@ public class UsersController : Controller
         return RedirectToAction(nameof(List));
     }
 
-    [HttpPost("delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(long id)
+    [HttpGet]
+    public async Task<IActionResult> List(bool? isActive, UserListSortField? sortField, int? pageNumber, bool sortOrder = false)
     {
-        await _userService.DeleteAsync(id);
-        return RedirectToAction("List");
+        var model = new UserListViewModel
+        {
+            IsActive = isActive,
+            SortOrder = sortOrder,
+            SortField = sortField ?? UserListSortField.Id
+        };
+
+        string sortfieldName = model.SortField.ToString() ?? UserListSortField.Id.ToString();
+        List<User> users = !isActive.HasValue
+            ? await _userService.GetAllAsync(sortfieldName, sortOrder)
+            : await _userService.FilterByActiveAsync(isActive.Value, sortfieldName, sortOrder);
+
+        model.PagedItems = await PagedList<UserListItemViewModel>.CreateAsync(users.ToUserItems(), pageNumber ?? 1, PageSize);
+        return View(model);
     }
 }

@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 
 namespace UserManagement.Data.Extensions;
+
 public static class UserValidators
 {
     public static ValidationResult? ValidateDateOfBirth(DateTime? date, ValidationContext context)
@@ -23,4 +24,3 @@ public static class UserValidators
         return ValidationResult.Success;
     }
 }
-

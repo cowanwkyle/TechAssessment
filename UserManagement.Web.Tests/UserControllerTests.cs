@@ -12,48 +12,14 @@ namespace UserManagement.Data.Tests;
 
 public class UserControllerTests
 {
-    private readonly Mock<IUserService> _mockUserService;
     private readonly UsersController _controller;
+    private readonly Mock<IUserService> _mockUserService;
 
     public UserControllerTests()
     {
         _mockUserService = new Mock<IUserService>();
         _controller = new UsersController(_mockUserService.Object);
     }
-
-    [Fact]
-    public async Task List_WhenServiceReturnsUsers_ModelMustContainUsers()
-    {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var users = DefaultUsers();
-        _mockUserService.Setup(s => s.GetAllAsync("Id", false)).ReturnsAsync(users);
-
-        // Act: Invokes the method under test with the arranged parameters.
-        var result = await _controller.List(null,UserListSortField.Id, 1, false);
-
-        // Assert: Verifies that the action of the method under test behaves as expected.
-        result.Should().BeOfType<ViewResult>()
-          .Which.Model.Should().BeOfType<UserListViewModel>()
-          .Which.PagedItems.Should().BeEquivalentTo(users);
-    }
-
-    [Fact]
-    public async Task List_WhenServiceReturnsActiveUsers_ModelMustContainActiveUsers()
-    {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var users = new List<User>() { CreateUser(1, true) };
-        _mockUserService.Setup(s => s.FilterByActiveAsync(true, "Id", false)).ReturnsAsync(users).Verifiable();
-
-        // Act: Invokes the method under test with the arranged parameters.
-        var result = await _controller.List(true, UserListSortField.Id, 1, false);
-
-        // Assert: Verifies that the action of the method under test behaves as expected.
-        result.Should().BeOfType<ViewResult>()
-          .Which.Model.Should().BeOfType<UserListViewModel>()
-          .Which.PagedItems.Should().BeEquivalentTo(users);
-        _mockUserService.Verify();
-    }
-
 
     [Fact]
     public async Task Create_WhenServiceCreateNewUser_ReturnsARedirectToList()
@@ -68,7 +34,7 @@ public class UserControllerTests
         result.Should().BeOfType<RedirectToActionResult>()
             .Which.ActionName.Should().BeEquivalentTo(nameof(UsersController.List));
         _mockUserService.Verify();
-            }
+    }
 
     [Fact]
     public async Task CreatePost_WhenModelInvalid_ReturnsSameView()
@@ -80,6 +46,20 @@ public class UserControllerTests
 
         result.Should().BeOfType<ViewResult>()
             .Which.Model.Should().BeEquivalentTo(itemViewModel);
+    }
+
+    [Fact]
+    public async Task Delete_WhenCalled_DeletesUserAndRedirects()
+    {
+        long userId = 1;
+        _mockUserService.Setup(s => s.DeleteAsync(userId)).Verifiable();
+
+        var result = await _controller.Delete(userId);
+
+        result.Should().BeOfType<RedirectToActionResult>()
+            .Which.ActionName.Should().BeEquivalentTo(nameof(UsersController.List));
+
+        _mockUserService.Verify();
     }
 
     [Fact]
@@ -131,17 +111,36 @@ public class UserControllerTests
     }
 
     [Fact]
-    public async Task Delete_WhenCalled_DeletesUserAndRedirects()
+    public async Task List_WhenServiceReturnsActiveUsers_ModelMustContainActiveUsers()
     {
-        long userId = 1;
-        _mockUserService.Setup(s => s.DeleteAsync(userId)).Verifiable();
+        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
+        var users = new List<User>() { CreateUser(1, true) };
+        _mockUserService.Setup(s => s.FilterByActiveAsync(true, "Id", false)).ReturnsAsync(users).Verifiable();
 
-        var result = await _controller.Delete(userId);
+        // Act: Invokes the method under test with the arranged parameters.
+        var result = await _controller.List(true, UserListSortField.Id, 1, false);
 
-        result.Should().BeOfType<RedirectToActionResult>()
-            .Which.ActionName.Should().BeEquivalentTo(nameof(UsersController.List));
-
+        // Assert: Verifies that the action of the method under test behaves as expected.
+        result.Should().BeOfType<ViewResult>()
+          .Which.Model.Should().BeOfType<UserListViewModel>()
+          .Which.PagedItems.Should().BeEquivalentTo(users);
         _mockUserService.Verify();
+    }
+
+    [Fact]
+    public async Task List_WhenServiceReturnsUsers_ModelMustContainUsers()
+    {
+        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
+        var users = DefaultUsers();
+        _mockUserService.Setup(s => s.GetAllAsync("Id", false)).ReturnsAsync(users);
+
+        // Act: Invokes the method under test with the arranged parameters.
+        var result = await _controller.List(null, UserListSortField.Id, 1, false);
+
+        // Assert: Verifies that the action of the method under test behaves as expected.
+        result.Should().BeOfType<ViewResult>()
+          .Which.Model.Should().BeOfType<UserListViewModel>()
+          .Which.PagedItems.Should().BeEquivalentTo(users);
     }
 
     private User CreateUser(long id = 5, bool isActive = true, string forename = "Johnny", string surname = "User", string email = "juser@example.com", string dateOfBirth = "2025-2-15") => new()

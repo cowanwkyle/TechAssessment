@@ -12,6 +12,7 @@ public class UserServiceTests
 {
     private readonly Mock<IDataContext> _mockDataContext;
     private readonly IUserService _service;
+
     public UserServiceTests()
     {
         _mockDataContext = new Mock<IDataContext>();
@@ -19,18 +20,31 @@ public class UserServiceTests
     }
 
     [Fact]
-    public async Task GetAllAsync_WhenContextReturnsEntities_MustReturnSameEntities()
+    public async Task CreateAsync_WhenNewEntityAdded_CallsContext()
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var users = DefaultUsers();
-        _mockDataContext.Setup(s => s.GetAsync<User>(null,"Id", false)).ReturnsAsync(users);
+        var user = CreateUser();
+        _mockDataContext.Setup(s => s.CreateAsync<User>(user)).Returns(Task.CompletedTask).Verifiable();
 
         // Act: Invokes the method under test with the arranged parameters.
-        var result = await _service.GetAllAsync("Id", false);
+        await _service.CreateAsync(user);
 
         // Assert: Verifies that the action of the method under test behaves as expected.
-        result.Should().BeEquivalentTo(users);
-        _mockDataContext.Verify();
+        _mockDataContext.Verify(data => data.CreateAsync<User>(user), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldCallContextDelete()
+    {
+        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
+        long userId = 8;
+        _mockDataContext.Setup(s => s.DeleteAsync<User>(userId)).Returns(Task.CompletedTask).Verifiable();
+
+        // Act: Invokes the method under test with the arranged parameters.
+        await _service.DeleteAsync(userId);
+
+        // Assert: Verifies that the action of the method under test behaves as expected.
+        _mockDataContext.Verify(data => data.DeleteAsync<User>(userId), Times.Once);
     }
 
     [Fact]
@@ -41,11 +55,26 @@ public class UserServiceTests
         _mockDataContext.Setup(s => s.GetAsync<User>(It.IsAny<Expression<Func<User, bool>>>(), "Id", false)).ReturnsAsync(users).Verifiable();
 
         // Act: Invokes the method under test with the arranged parameters.
-        var result = await _service.FilterByActiveAsync(true,"Id", false);
+        var result = await _service.FilterByActiveAsync(true, "Id", false);
 
         // Assert: Verifies that the action of the method under test behaves as expected.
         result.Should().BeEquivalentTo(users);
         _mockDataContext.Verify(data => data.GetAsync<User>(It.IsAny<Expression<Func<User, bool>>>(), "Id", false), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WhenContextReturnsEntities_MustReturnSameEntities()
+    {
+        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
+        var users = DefaultUsers();
+        _mockDataContext.Setup(s => s.GetAsync<User>(null, "Id", false)).ReturnsAsync(users);
+
+        // Act: Invokes the method under test with the arranged parameters.
+        var result = await _service.GetAllAsync("Id", false);
+
+        // Assert: Verifies that the action of the method under test behaves as expected.
+        result.Should().BeEquivalentTo(users);
+        _mockDataContext.Verify();
     }
 
     [Fact]
@@ -80,21 +109,6 @@ public class UserServiceTests
     }
 
     [Fact]
-    public async Task CreateAsync_WhenNewEntityAdded_CallsContext()
-    {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        var user = CreateUser();
-        _mockDataContext.Setup(s => s.CreateAsync<User>(user)).Returns(Task.CompletedTask).Verifiable();
-
-        // Act: Invokes the method under test with the arranged parameters.
-        await _service.CreateAsync(user);
-
-        // Assert: Verifies that the action of the method under test behaves as expected.
-        _mockDataContext.Verify(data => data.CreateAsync<User>(user), Times.Once);
-    }
-
-
-    [Fact]
     public async Task UpdateAsync_ShouldCallContextUpdate()
     {
         // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
@@ -106,20 +120,6 @@ public class UserServiceTests
 
         // Assert: Verifies that the action of the method under test behaves as expected.
         _mockDataContext.Verify(data => data.UpdateAsync<User>(user), Times.Once);
-    }
-
-    [Fact]
-    public async Task DeleteAsync_ShouldCallContextDelete()
-    {
-        // Arrange: Initializes objects and sets the value of the data that is passed to the method under test.
-        long userId = 8;
-        _mockDataContext.Setup(s => s.DeleteAsync<User>(userId)).Returns(Task.CompletedTask).Verifiable();
-
-        // Act: Invokes the method under test with the arranged parameters.
-        await _service.DeleteAsync(userId);
-
-        // Assert: Verifies that the action of the method under test behaves as expected.
-        _mockDataContext.Verify(data => data.DeleteAsync<User>(userId), Times.Once);
     }
 
     private User CreateUser(long id = 5, bool isActive = true, string forename = "Johnny", string surname = "User", string email = "juser@example.com", string dateOfBirth = "2025-2-15") => new()
